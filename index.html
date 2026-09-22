@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MaBoutique — Version Complète</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif}
+body{background:#f9f9f9;padding:10px}
+.cache{display:none !important}
+.entete{background:linear-gradient(135deg,#f97316,#fb923c);color:white;padding:15px;border-radius:12px;margin-bottom:15px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+.barre-connexion{display:flex;gap:8px;margin-bottom:15px;flex-wrap:wrap}
+.barre-connexion input{flex:1;min-width:160px;padding:12px;border-radius:8px;border:1px solid #ddd}
+button{padding:12px 15px;border:none;border-radius:8px;font-weight:bold;cursor:pointer;transition:0.2s}
+.btn-bleu{background:#2563eb;color:white}
+.btn-violet{background:#7c3aed;color:white}
+.btn-orange{background:#f97316;color:white}
+.btn-vert{background:#16a34a;color:white}
+.btn-rouge{background:#dc2626;color:white}
+.btn-gris{background:#6b7280;color:white}
+.btn-deco{background:#ef4444;color:white}
+.btn-nettoyer{background:#f59e0b;color:white}
+.btn-retour{background:#6366f1;color:white;margin-bottom:15px}
+.onglets{display:flex;gap:5px;margin:15px 0;overflow-x:auto;padding-bottom:5px}
+.onglet{padding:10px 15px;background:#e5e7eb;border-radius:8px;white-space:nowrap}
+.onglet.actif{background:#f97316;color:white}
+.cartes{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px;margin:15px 0}
+.carte-produit{background:white;padding:15px;border-radius:12px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.1)}
+.carte-produit .img-produit{width:100%;height:150px;object-fit:cover;border-radius:8px;margin-bottom:10px;background:#f5f5f5}
+.carte-produit .icone{font-size:3em;margin-bottom:10px;color:#ccc}
+.carte-produit h3{font-size:1.1em;margin-bottom:5px;color:#333}
+.carte-produit .prix{font-size:1.2em;font-weight:bold;color:#f97316;margin:10px 0}
+.cartes-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:15px 0}
+.carte-stats{padding:20px;border-radius:12px;text-align:center;color:white}
+.carte-bleu{background:#2563eb}
+.carte-vert{background:#16a34a}
+.carte-rouge{background:#dc2626}
+.carte-violet{background:#7c3aed}
+.carte-orange{background:#ea580c}
+.bloc{background:white;padding:15px;border-radius:12px;margin-bottom:15px;box-shadow:0 2px 8px rgba(0,0,0,0.1)}
+input,select,textarea{width:100%;padding:12px;margin:8px 0;border:1px solid #ddd;border-radius:8px;font-size:1em}
+table{width:100%;border-collapse:collapse;margin-top:10px;font-size:0.9em}
+th,td{padding:10px;text-align:left;border-bottom:1px solid #eee}
+th{background:#f3f4f6}
+.facture{border:2px solid #333;padding:20px;border-radius:12px;background:#fff;max-width:480px;margin:0 auto}
+.facture-titre{text-align:center;font-size:1.4em;font-weight:bold;margin-bottom:15px}
+.ligne{display:flex;justify-content:space-between;padding:5px 0}
+.total{border-top:2px solid #333;padding-top:10px;font-weight:bold;font-size:1.1em}
+.reste-a-payer{color:#dc2626;font-weight:bold}
+.alerte-stock{padding:12px;border-radius:8px;margin-top:10px}
+.ok{background:#dcfce7;color:#166534}
+.avert{background:#fef3c7;color:#92400e}
+.bas{margin-top:20px;text-align:center;color:#666;font-size:0.9em}
+.badge-panier{background:#dc2626;color:white;border-radius:50%;width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;font-size:0.8em}
+.config-api{background:#eff6ff;border-left:4px solid #2563eb}
+.info-connecte{display:flex;align-items:center;gap:10px}
+</style>
+</head>
+<body>
+
+<!-- EN-TÊTE -->
+<div class="entete">
+<h1>🏪 MaBoutique</h1>
+<div class="info-connecte">
+<span id="affConnecte" style="display:none">✅ <span id="nomConnecte"></span></span>
+<button id="btnDeconnexion" class="btn-deco cache" onclick="seDeconnecter()">🚪 Déconnexion</button>
+</div>
+</div>
+
+<!-- CONNEXION -->
+<div id="zoneConnexion" class="barre-connexion">
+<input type="email" id="emailUser" placeholder="Email">
+<input type="password" id="mdpUser" placeholder="Mot de passe">
+<button class="btn-bleu" onclick="seConnecter()">🔑 Connexion</button>
+<button class="btn-violet" onclick="creerAdmin()">⚙️ Créer Admin</button>
+</div>
+
+<!-- ONGLETS -->
+<div class="onglets cache" id="ongletsApp">
+<button class="onglet actif" data-page="boutique" onclick="changerPage('boutique')">🛍️ Boutique</button>
+<button class="onglet" data-page="accueil" onclick="changerPage('accueil')">📊 Accueil</button>
+<button class="onglet" data-page="produits" onclick="changerPage('produits')">📦 Produits</button>
+<button class="onglet" data-page="vente" onclick="changerPage('vente')">🛒 Vente</button>
+<button class="onglet" data-page="facture" onclick="changerPage('facture')">🧾 Factures</button>
+<button class="onglet" data-page="utilisateurs" onclick="changerPage('utilisateurs')">👤 Utilisateurs</button>
+<button class="onglet" data-page="ca" onclick="changerPage('ca')">💰 Chiffre d'Affaires</button>
+<button class="onglet" data-page="parametres" onclick="changerPage('parametres')">🔑 API Paiement</button>
+</div>
+
+<!-- PAGE BOUTIQUE -->
+<div id="page-boutique" class="page cache">
+<h2 style="margin:10px 0">📦 Nos Produits</h2>
+<div id="listeBoutique" class="cartes"></div>
+</div>
+
+<!-- PAGE ACCUEIL -->
+<div id="page-accueil" class="page cache">
+<div class="cartes-stats">
+<div class="carte-stats carte-bleu">
+<h2 id="nbVentesJour">0</h2>
+<p>Ventes du jour</p>
+</div>
+<div class="carte-stats carte-vert">
+<h2 id="caGlobal">0</h2>
+<p>CA Global (GNF)</p>
+</div>
+<div class="carte-stats carte-rouge">
+<h2 id="nbImpayes">0</h2>
+<p>Impayés / Partiels</p>
+</div>
+<div class="carte-stats carte-orange">
+<h2 id="nbProduits">0</h2>
+<p>Produits actifs</p>
+</div>
+</div>
+<div class="bloc">
+<h3>⚠️ Alertes Stock</h3>
+<div id="alertesStock" class="alerte-stock ok">✅ Stocks suffisants</div>
+</div>
+</div>
+
+<!-- PAGE PRODUITS -->
+<div id="page-produits" class="page cache">
+<div class="bloc">
+<h3>Ajouter / Modifier Produit</h3>
+<input type="text" id="idProd" placeholder="ID Produit">
+<input type="text" id="nomProd" placeholder="Nom Produit">
+<input type="number" id="prixProd" placeholder="Prix unitaire (GNF)" step="0">
+<input type="number" id="qteProd" placeholder="Quantité en stock" step="1">
+<button class="btn-vert" onclick="enregistrerProduit()">✅ Enregistrer</button>
+<button class="btn-rouge" onclick="supprimerProduit()">🗑️ Supprimer</button>
+</div>
+<div class="bloc">
+<h3>Liste des Produits</h3>
+<table id="listeProduits"></table>
+</div>
+</div>
+
+<!-- PAGE VENTE -->
+<div id="page-vente" class="page cache">
+<div class="bloc">
+<h3>Nouvelle Vente</h3>
+<input type="text" id="nomClient" placeholder="Nom complet du client">
+<input type="tel" id="telClient" placeholder="Téléphone client">
+<input type="text" id="idProdVente" placeholder="ID Produit">
+<input type="number" id="qteVente" placeholder="Quantité" min="1">
+<button class="btn-vert" onclick="ajouterAuPanier()">🛒 Ajouter au panier</button>
+<button class="btn-gris" onclick="viderPanier()">🗑️ Vider le panier</button>
+</div>
+<div class="bloc">
+<h3>Panier</h3>
+<table id="panier"></table>
+<div style="margin-top:10px;font-weight:bold;font-size:1.1em">
+Total : <span id="montantTotal">0</span> GNF
+</div>
+</div>
+<div class="bloc">
+<h3>💳 Paiement — Règlement</h3>
+<input type="number" id="montantPaye" placeholder="Montant versé par le client (GNF)" min="0">
+<div style="margin:8px 0;font-weight:bold;color:#dc2626">
+Reste à payer : <span id="calculReste">0</span> GNF
+</div>
+<button class="btn-vert" onclick="genererFacture()">🧾 Générer Facture</button>
+</div>
+</div>
+
+<!-- PAGE FACTURE -->
+<div id="page-facture" class="page cache">
+<button class="btn-retour" onclick="revenirEnArriere()">⬅️ Nouvelle Vente</button>
+<div id="zoneFacture" class="facture cache">
+<div class="facture-titre">FACTURE</div>
+<div class="ligne"><span>N° Facture :</span><span id="numFact"></span></div>
+<div class="ligne"><span>Date :</span><span id="dateFact"></span></div>
+<div class="ligne"><span>Client :</span><span id="nomFact"></span></div>
+<div class="ligne"><span>Téléphone :</span><span id="telFact"></span></div>
+<hr style="margin:10px 0">
+<div id="contenuFact"></div>
+<div class="ligne total"><span>Montant Total :</span><span id="totalFact"></span></div>
+<div class="ligne"><span>Montant Versé :</span><span id="verseFact"></span></div>
+<div class="ligne reste-a-payer"><span>Reste à Payer :</span><span id="resteFact"></span></div>
+<p style="margin-top:15px;text-align:right">✅ Livré</p>
+</div>
+</div>
+
+<!-- PAGE UTILISATEURS -->
+<div id="page-utilisateurs" class="page cache">
+<div class="bloc">
+<h3>Ajouter Utilisateur</h3>
+<input type="email" id="nouvEmail" placeholder="Email">
+<input type="password" id="nouvMdp" placeholder="Mot de passe">
+<select id="nouvRole">
+<option value="utilisateur">Utilisateur</option>
+<option value="admin">Administrateur</option>
+</select>
+<button class="btn-vert" onclick="ajouterUtilisateur()">✅ Ajouter</button>
+</div>
+<div class="bloc">
+<h3>🧹 Nettoyage</h3>
+<button class="btn-nettoyer" onclick="supprimerUtilisateursInconnus()">🗑️ Supprimer ventes/utilisateurs inconnus</button>
+<p style="font-size:0.9em;color:#666;margin-top:8px">Supprime les lignes "undefined" et ventes sans compte valide</p>
+</div>
+<div class="bloc">
+<h3>Liste des Comptes</h3>
+<table id="listeUtilisateurs"></table>
+</div>
+</div>
+
+<!-- PAGE CA -->
+<div id="page-ca" class="page cache">
+<div class="bloc">
+<h3>💰 Chiffre d'Affaires par Utilisateur</h3>
+<button class="btn-bleu" onclick="actualiserCA()">🔄 Actualiser</button>
+<table id="tableCA"></table>
+</div>
+<div class="bloc">
+<h3>📊 Toutes les Ventes (Vue Admin)</h3>
+<button class="btn-bleu" onclick="voirToutesVentes()">🔄 Actualiser</button>
+<table id="toutesVentes"></table>
+</div>
+</div>
+
+<!-- PAGE PARAMÈTRES API -->
+<div id="page-parametres" class="page cache">
+<div class="bloc config-api">
+<h3>🔑 Paramètres API Paiement</h3>
+<input type="text" id="apiNomMarchand" placeholder="Nom de la boutique">
+<input type="text" id="apiNumeroMarchand" placeholder="N° compte marchand Orange Money">
+<input type="password" id="apiCle" placeholder="Clé API">
+<button class="btn-bleu" onclick="sauvegarderAPI()">💾 Sauvegarder</button>
+<p style="margin-top:10px;color:green;display:none" id="confAPI">✅ Enregistré !</p>
+</div>
+</div>
+
+<div class="bas">🔒 SÉCURISÉE — Koulibaly_Securite_2026#</div>
+
+<script>
+// === DONNÉES ===
+let utilisateurs = JSON.parse(localStorage.getItem('utilisateurs')) || {};
+let produits = JSON.parse(localStorage.getItem('produits')) || [];
+let ventes = JSON.parse(localStorage.getItem('ventes')) || [];
+let panier = [];
+let utilisateurActuel = localStorage.getItem('utilisateurActuel') || null;
+
+// === COMPTE ADMIN PAR DÉFAUT ===
+if(Object.keys(utilisateurs).length === 0){
+utilisateurs['admin@koulibaly.gn'] = {mdp:'Koulibaly_Securite_2026#', role:'admin', nom:'Administrateur'};
+sauvegarderDonnees();
+}
+
+// === RESTAURER CONNEXION ===
+if(utilisateurActuel && utilisateurs[utilisateurActuel]){
+afficherInterfaceConnectee();
+}
+
+// === CALCULER LE RESTE À PAYER EN TEMPS RÉEL ===
+document.getElementById('montantPaye').addEventListener('input', function(){
+const total = panier.reduce((s,a)=>s+a.sousTotal,0);
+const verse = Number(this.value) || 0;
+const reste = total - verse;
+document.getElementById('calculReste').textContent = reste.toLocaleString('fr-FR') + ' GNF';
+});
+
+// === CONNEXION / DÉCONNEXION ===
+function seConnecter(){
+const email = document.getElementById('emailUser').value.trim();
+const mdp = document.getElementById('mdpUser').value;
+if(!utilisateurs[email]) return alert("❌ Utilisateur inconnu !");
+if(utilisateurs[email].mdp !== mdp) return alert("❌ Mot de passe incorrect !");
+utilisateurActuel = email;
+localStorage.setItem('utilisateurActuel', email);
+afficherInterfaceConnectee();
+alert("✅ Connexion réussie !");
+}
+
+function afficherInterfaceConnectee(){
+document.getElementById('zoneConnexion').classList.add('cache');
+document.getElementById('ongletsApp').classList.remove('cache');
+document.getElementById('affConnecte').style.display = 'block';
+document.getElementById('nomConnecte').textContent = utilisateurActuel;
+document.getElementById('btnDeconnexion').classList.remove('cache');
+mettreAJourAffichage();
+changerPage('accueil');
+}
+
+function seDeconnecter(){
+if(!confirm("Se déconnecter ?")) return;
+utilisateurActuel = null;
+localStorage.removeItem('utilisateurActuel');
+document.getElementById('zoneConnexion').classList.remove('cache');
+document.getElementById('ongletsApp').classList.add('cache');
+document.getElementById('affConnecte').style.display = 'none';
+document.getElementById('btnDeconnexion').classList.add('cache');
+document.getElementById('emailUser').value=''; document.getElementById('mdpUser').value='';
+}
+
+function creerAdmin(){
+const email = prompt("Email du nouvel administrateur :");
+if(!email) return;
+const mdp = prompt("Mot de passe :");
+if(!mdp) return;
+utilisateurs[email] = {mdp, role:'admin', nom:'Admin-' + email.split('@')[0]};
+sauvegarderDonnees();
+alert("✅ Administrateur créé !");
+}
+
+// === NAVIGATION ===
+function changerPage(nom){
+document.querySelectorAll('.page').forEach(p=>p.classList.add('cache'));
+document.getElementById('page-'+nom).classList.remove('cache');
+document.querySelectorAll('.onglet').forEach(o=>o.classList.remove('actif'));
+document.querySelector(`[data-page="${nom}"]`).classList.add('actif');
+if(nom==='boutique') afficherBoutique();
+if(nom==='ca') actualiserCA();
+if(nom==='utilisateurs') afficherListeUtilisateurs();
+}
+
+// === BOUTIQUE ===
+function afficherBoutique(){
+const conteneur = document.getElementById('listeBoutique');
+if(produits.length===0){
+conteneur.innerHTML = "<p style='text-align:center;color:#666'>Aucun produit disponible</p>";
+return;
+}
+conteneur.innerHTML = "";
+produits.forEach(p=>{
+const carte = document.createElement('div');
+carte.className = 'carte-produit';
+carte.innerHTML = `
+<div class="icone">📦</div>
+<h3>${p.nom}</h3>
+<p class="prix">${p.prix.toLocaleString('fr-FR')} GNF</p>
+<p style="font-size:0.9em;color:#666">Stock : ${p.qte}</p>
+<button class="btn-orange" onclick="ajouterAuPanierBoutique('${p.id}')">🛒 Ajouter</button>
+`;
+conteneur.appendChild(carte);
+});
+}
+
+function ajouterAuPanierBoutique(id){
+const prod = produits.find(p=>p.id===id);
+if(!prod) return alert("❌ Produit introuvable !");
+const qte = Number(prompt("Quantité :", "1"));
+if(!qte || qte<1) return;
+if(prod.qte < qte) return alert("❌ Stock insuffisant ! Disponible : " + prod.qte);
+panier.push({id:prod.id, nom:prod.nom, prix:prod.prix, qte, sousTotal:prod.prix*qte});
+prod.qte -= qte;
+sauvegarderDonnees();
+afficherPanier();
+}
+
+// === PRODUITS ===
+function enregistrerProduit(){
+const id = document.getElementById('idProd').value.trim();
+const nom = document.getElementById('nomProd').value.trim();
+const prix = Number(document.getElementById('prixProd').value);
+const qte = Number(document.getElementById('qteProd').value);
+if(!id || !nom || !prix) return alert("⚠️ Remplissez ID, Nom et Prix !");
+const existant = produits.find(p=>p.id===id);
+if(existant){
+existant.nom=nom; existant.prix=prix; existant.qte=qte;
+} else {
+produits.push({id, nom, prix, qte});
+}
+sauvegarderDonnees();
+alert("✅ Produit enregistré !");
+document.getElementById('idProd').value=''; document.getElementById('nomProd').value='';
+document.getElementById('prixProd').value=''; document.getElementById('qteProd').value='';
+mettreAJourAffichage(); afficherBoutique();
+}
+
+function supprimerProduit(){
+const id = document.getElementById('idProd').value.trim();
+if(!id) return alert("⚠️ Saisissez l'ID du produit !");
+if(!confirm("Supprimer ce produit ?")) return;
+produits = produits.filter(p=>p.id!==id);
+sauvegarderDonnees();
+alert("✅ Supprimé !");
+mettreAJourAffichage(); afficherBoutique();
+}
+
+// === PANIER ===
+function ajouterAuPanier(){
+const id = document.getElementById('idProdVente').value.trim();
+const qte = Number(document.getElementById('qteVente').value);
+const prod = produits.find(p=>p.id===id);
+if(!prod) return alert("❌ Produit introuvable !");
+if(prod.qte < qte) return alert("❌ Stock insuffisant !");
+panier.push({id:prod.id, nom:prod.nom, prix:prod.prix, qte, sousTotal:prod.prix*qte});
+prod.qte -= qte;
+sauvegarderDonnees();
+afficherPanier();
+document.getElementById('idProdVente').value=''; document.getElementById('qteVente').value='';
+}
+
+function afficherPanier(){
+let html = '<tr><th>Produit</th><th>Qté</th><th>Prix</th><th>Total</th></tr>';
+panier.forEach(a=>html += `<tr><td>${a.nom}</td><td>${a.qte}</td><td>${a.prix.toLocaleString('fr-FR')}</td><td>${a.sousTotal.toLocaleString('fr-FR')}</td></tr>`);
+document.getElementById('panier').innerHTML = html;
+const total = panier.reduce((s,a)=>s+a.sousTotal,0);
+document.getElementById('montantTotal').textContent = total.toLocaleString('fr-FR');
+const verse = Number(document.getElementById('montantPaye').value) || 0;
+document.getElementById('calculReste').textContent = (total - verse).toLocaleString('fr-FR') + ' GNF';
+}
+
+function viderPanier(){
+panier = [];
+document.getElementById('montantPaye').value='';
+afficherPanier();
+}
+
+// === FACTURE AVEC PAIEMENT PARTIEL ===
+function genererFacture(){
+if(panier.length===0) return alert("⚠️ Panier vide !");
+const nom = document.getElementById('nomClient').value.trim();
+const tel = document.getElementById('telClient').value.trim();
+const verse = Number(document.getElementById('montantPaye').value) || 0;
+if(!nom) return alert("⚠️ Nom du client obligatoire !");
+if(!utilisateurActuel) return alert("⚠️ Déconnecté — reconnectez-vous !");
+
+const total = panier.reduce((s,a)=>s+a.sousTotal,0);
+const reste = total - verse;
+const numFact = 'FACT-' + Date.now();
+const date = new Date().toLocaleDateString('fr-FR');
+
+ventes.push({
+id: numFact,
+date,
+client: nom,
+telephone: tel,
+articles: [...panier],
+total,
+verse,
+reste,
+utilisateur: utilisateurActuel
+});
+sauvegarderDonnees();
+
+// Affichage facture
+document.getElementById('numFact').textContent = numFact;
+document.getElementById('dateFact').textContent = date;
+document.getElementById('nomFact').textContent = nom;
+document.getElementById('telFact').textContent = tel || "Non renseigné";
+document.getElementById('contenuFact').innerHTML = panier.map(a=>
+`<div class="ligne">${a.nom} × ${a.qte} — ${a.sousTotal.toLocaleString('fr-FR')} GNF</div>`
+).join('');
+document.getElementById('totalFact').textContent = total.toLocaleString('fr-FR') + ' GNF';
+document.getElementById('verseFact').textContent = verse.toLocaleString('fr-FR') + ' GNF';
+document.getElementById('resteFact').textContent = reste.toLocaleString('fr-FR') + ' GNF';
+document.getElementById('zoneFacture').classList.remove('cache');
+
+if(reste > 0){
+alert(`⚠️ Paiement partiel !\nTotal : ${total.toLocaleString('fr-FR')} GNF\nVersé : ${verse.toLocaleString('fr-FR')} GNF\nReste : ${reste.toLocaleString('fr-FR')} GNF`);
+} else {
+alert("✅ Paiement complet !");
+}
+
+viderPanier();
+document.getElementById('nomClient').value=''; document.getElementById('telClient').value='';
+changerPage('facture');
+mettreAJourAffichage();
+}
+
+function revenirEnArriere(){
+document.getElementById('zoneFacture').classList.add('cache');
+changerPage('vente');
+}
+
+// === SUPPRIMER VENTES/UTILISATEURS INCONNUS ===
+function supprimerUtilisateursInconnus(){
+if(utilisateurs[utilisateurActuel]?.role !== 'admin') return alert("⚠️ Administrateur seulement !");
+if(!confirm("Confirmer la suppression des ventes incomplètes et lignes inconnues ?")) return;
+
+const avant = ventes.length;
+ventes = ventes.filter(v => {
+return v.utilisateur && v.utilisateur !== 'undefined' && utilisateurs[v.utilisateur];
+});
+const apres = ventes.length;
+
+alert(`✅ Nettoyage terminé !\nLignes supprimées : ${avant - apres}\nConservées : ${apres}`);
+sauvegarderDonnees();
+mettreAJourAffichage();
+}
+
+// === GESTION UTILISATEURS ===
+function ajouterUtilisateur(){
+if(utilisateurs[utilisateurActuel]?.role !== 'admin') return alert("⚠️ Admin seulement !");
+const email = document.getElementById('nouvEmail').value.trim();
+const mdp = document.getElementById('nouvMdp').value;
+const role = document.getElementById('nouvRole').value;
+if(!email || !mdp) return alert("⚠️ Remplissez tout !");
+if(utilisateurs[email]) return alert("❌ Existe déjà !");
+utilisateurs[email] = {mdp, role, nom:email.split('@')[0]};
+sauvegarderDonnees();
+alert("✅ Utilisateur ajouté !");
+document.getElementById('nouvEmail').value=''; document.getElementById('nouvMdp').value='';
+afficherListeUtilisateurs();
+}
+
+function supprimerUnUtilisateur(email){
+if(utilisateurs[utilisateurActuel]?.role !== 'admin') return alert("⚠️ Refusé !");
+if(email === utilisateurActuel) return alert("❌ Vous ne pouvez pas vous supprimer vous-même !");
+if(!confirm("Supprimer : " + email + " ?")) return;
+delete utilisateurs[email];
+sauvegarderDonnees();
+alert("✅ Supprimé !");
+afficherListeUtilisateurs();
+}
+
+function afficherListeUtilisateurs(){
+const estAdmin = utilisateurs[utilisateurActuel]?.role === 'admin';
+let html = '<tr><th>Email</th><th>Rôle</th><th>Action</th></tr>';
+for(let u in utilisateurs){
+const btnSuppr = (estAdmin && u !== utilisateurActuel) ?
+`<button class="btn-rouge" style="padding:6px 10px;font-size:0.85em" onclick="supprimerUnUtilisateur('${u}')">🗑️ Supprimer</button>` : '';
+html += `<tr><td>${u}</td><td>${utilisateurs[u].role}</td><td>${btnSuppr}</td></tr>`;
+}
+document.getElementById('listeUtilisateurs').innerHTML = html;
+}
+
+// === CA PAR UTILISATEUR + CA GLOBAL ===
+function actualiserCA(){
+if(!utilisateurActuel) return alert("⚠️ Connectez-vous !");
+const estAdmin = utilisateurs[utilisateurActuel]?.role === 'admin';
+const caParUser = {};
+let caGlobal = 0;
+
+ventes.forEach(v=>{
+if(!v.utilisateur || !utilisateurs[v.utilisateur]) return;
+if(!caParUser[v.utilisateur]){
+caParUser[v.utilisateur] = {ventes:0, montant:0, resteDu:0};
+}
+caParUser[v.utilisateur].ventes++;
+caParUser[v.utilisateur].montant += v.total;
+caParUser[v.utilisateur].resteDu += v.reste || 0;
+caGlobal += v.total;
+});
+
+let htmlCA = `<tr style="font-weight:bold;background:#fef3c7">
+<td colspan="2">💰 CA GLOBAL TOTAL</td>
+<td>${caGlobal.toLocaleString('fr-FR')} GNF</td>
+<td>—</td>
+</tr>`;
+htmlCA += '<tr><th>Utilisateur</th><th>Nb Ventes</th><th>CA Total (GNF)</th><th>Impayés (GNF)</th></tr>';
+
+for(let u in caParUser){
+if(estAdmin || u === utilisateurActuel){
+htmlCA += `<tr>
+<td>${u}</td>
+<td>${caParUser[u].ventes}</td>
+<td style="color:green;font-weight:bold">${caParUser[u].montant.toLocaleString('fr-FR')}</td>
+<td style="color:${caParUser[u].resteDu>0?'red':'gray'}">${caParUser[u].resteDu.toLocaleString('fr-FR')}</td>
+</tr>`;
+}
+}
+document.getElementById('tableCA').innerHTML = htmlCA;
+document.getElementById('caGlobal').textContent = caGlobal.toLocaleString('fr-FR');
+
+// Toutes les ventes
+voirToutesVentes();
+}
+
+function voirToutesVentes(){
+if(utilisateurs[utilisateurActuel]?.role !== 'admin') return;
+let html = '<tr><th>Date</th><th>Client</th><th>Vendeur</th><th>Total</th><th>Versé</th><th>Reste</th></tr>';
+ventes.slice().reverse().forEach(v=>{
+if(!v.utilisateur || !utilisateurs[v.utilisateur]) return;
+html += `<tr>
+<td>${v.date}</td>
+<td>${v.client}</td>
+<td>${v.utilisateur}</td>
+<td>${v.total.toLocaleString('fr-FR')}</td>
+<td>${(v.verse||0).toLocaleString('fr-FR')}</td>
+<td style="color:${v.reste>0?'red':'gray'}">${(v.reste||0).toLocaleString('fr-FR')}</td>
+</tr>`;
+});
+document.getElementById('toutesVentes').innerHTML = html;
+}
+
+// === PARAMÈTRES API ===
+function sauvegarderAPI(){
+if(utilisateurs[utilisateurActuel]?.role !== 'admin') return alert("⚠️ Admin seulement !");
+localStorage.setItem('paramAPI', JSON.stringify({
+nom: document.getElementById('apiNomMarchand').value.trim(),
+numero: document.getElementById('apiNumeroMarchand').value.trim(),
+cle: document.getElementById('apiCle').value.trim()
+}));
+document.getElementById('confAPI').style.display = 'block';
+setTimeout(()=>document.getElementById('confAPI').style.display='none', 2500);
+}
+
+// === SAUVEGARDE & AFFICHAGE GLOBAL ===
+function sauvegarderDonnees(){
+localStorage.setItem('utilisateurs', JSON.stringify(utilisateurs));
+localStorage.setItem('produits', JSON.stringify(produits));
+localStorage.setItem('ventes', JSON.stringify(ventes));
+}
+
+function mettreAJourAffichage(){
+const auj = new Date().toLocaleDateString('fr-FR');
+const ventesJour = ventes.filter(v=>v.date===auj && v.utilisateur && utilisateurs[v.utilisateur]).length;
+document.getElementById('nbVentesJour').textContent = ventesJour;
+
+const caGlobal = ventes.reduce((s,v)=>s + (v.utilisateur && utilisateurs[v.utilisateur] ? v.total : 0), 0);
+document.getElementById('caGlobal').textContent = caGlobal.toLocaleString('fr-FR');
+
+const impayes = ventes.filter(v=>(v.reste||0)>0 && v.utilisateur && utilisateurs[v.utilisateur]).length;
+document.getElementById('nbImpayes').textContent = impayes;
+document.getElementById('nbProduits').textContent = produits.length;
+
+// Liste produits
+let htmlP = '<tr><th>ID</th><th>Nom</th><th>Prix</th><th>Stock</th></tr>';
+produits.forEach(p=>htmlP += `<tr><td>${p.id}</td><td>${p.nom}</td><td>${p.prix.toLocaleString('fr-FR')}</td><td>${p.qte}</td></tr>`);
+document.getElementById('listeProduits').innerHTML = htmlP;
+
+// Alertes stock
+const alertes = produits.filter(p=>p.qte<=3);
+if(alertes.length){
+document.getElementById('alertesStock').className='alerte-stock avert';
+document.getElementById('alertesStock').innerHTML='⚠️ Stock bas : ' + alertes.map(p=>p.nom+' ('+p.qte+')').join(', ');
+} else {
+document.getElementById('alertesStock').className='alerte-stock ok';
+document.getElementById('alertesStock').innerHTML='✅ Stocks suffisants';
+}
+
+afficherPanier();
+}
+</script>
+</body>
+</html>
