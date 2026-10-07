@@ -624,6 +624,38 @@ document.getElementById('alertesStock').innerHTML='✅ Stocks suffisants';
 
 afficherPanier();
 }
+  // === GESTION DES CODES CONNECTÉS ===
+function afficherCodesActifs() {
+const sessions = JSON.parse(localStorage.getItem('sessions_verrouillees') || '{}');
+const bloc = document.getElementById('listeCodesActifs');
+
+if (!bloc) return;
+
+if (Object.keys(sessions).length === 0) {
+bloc.innerHTML = '<p style="color:#888; padding:20px; text-align:center;">✅ Aucun code connecté</p>';
+return;
+}
+
+bloc.innerHTML = '<p style="color:#ffd700; font-weight:bold; margin-bottom:15px;">🔑 Codes actifs :</p>' +
+Object.entries(sessions).map(([code, idApp]) => {
+const estAdmin = code === CODE_ADMIN;
+return `
+<div style="padding:15px; margin:10px 0; background:rgba(255,255,255,0.1); border-radius:8px;">
+<strong style="font-size:16px;">${estAdmin ? '👑 ADMIN — ' : '🔑 '}${code}</strong>
+<br><small style="color:#aaa;">Appareil : ${idApp.substring(0, 18)}...</small>
+<button class="btn-rouge btn-petit" style="margin-top:10px;" onclick="deconnecterCode('${code}')">🔓 Déconnecter</button>
+</div>`;
+}).join('');
+}
+
+function deconnecterCode(code) {
+if (confirm(`Déconnecter le code : ${code} ?`)) {
+libererSession(code);
+afficherCodesActifs();
+alert(`✅ Code ${code} déconnecté !`);
+}
+}
+
 </script>
 </body>
 </html>
